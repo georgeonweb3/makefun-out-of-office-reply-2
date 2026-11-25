@@ -1,31 +1,39 @@
-"""Write the funniest one-line out-of-office reply.
+"""Funniest one-line out-of-office reply, for make.fun.
 
-Entry for make.fun bounty u-hamsyh-funniest-one-line-out-of-office-reply-5490c1c8
+Competition: u-hamsyh-funniest-one-line-out-of-office-reply-5490c1c8
 ("Funniest One-Line Out-of-Office Reply").
 
-Deterministic, stdlib only, no network. Writes exactly one line to
-/output/entry.txt with no trailing newline.
+The program writes a single reply to /output/entry.txt: one line,
+1-160 characters, no trailing newline. Pure standard library, no
+network access, no randomness, same bytes on every run.
 """
 
-import os
+from pathlib import Path
 
-ENTRY = "I'm out until Monday — I finally took my annual leave, all four days of it, and I intend to spend them replying to nobody, including you, especially you."
+REPLY = "I'm out until Monday — I finally took my annual leave, all four days of it, and I intend to spend them replying to nobody, including you, especially you."
+
+DEST = Path("/output/entry.txt")
 
 
-def main() -> None:
-    os.makedirs("/output", exist_ok=True)
-    with open("/output/entry.txt", "w", encoding="utf-8", newline="") as f:
-        f.write(ENTRY)
-    # Read-back verification, re-run against the file on disk: the file
-    # must hold exactly the entry line, 1-160 characters, a single line,
-    # no trailing newline, valid UTF-8.
-    with open("/output/entry.txt", "r", encoding="utf-8", newline="") as f:
-        written = f.read()
-    assert written == ENTRY, "entry.txt does not match ENTRY"
-    assert 1 <= len(written) <= 160, "entry length outside 1-160 characters"
-    assert "\n" not in written, "entry must be a single line"
-    assert written.strip(), "entry must not be only whitespace"
+def build() -> str:
+    """Write the reply and read it back from disk."""
+    DEST.parent.mkdir(parents=True, exist_ok=True)
+    DEST.write_text(REPLY, encoding="utf-8", newline="")
+    with open(DEST, "r", encoding="utf-8", newline="") as f:
+        return f.read()
+
+
+def verify(text: str) -> None:
+    """The gate, checked against what is actually on disk."""
+    if text != REPLY:
+        raise SystemExit("entry.txt differs from REPLY")
+    if not 1 <= len(text) <= 160:
+        raise SystemExit("entry length outside 1-160 characters")
+    if text != text.strip():
+        raise SystemExit("entry has leading or trailing whitespace")
+    if "\n" in text or "\r" in text:
+        raise SystemExit("entry must be a single line")
 
 
 if __name__ == "__main__":
-    main()
+    verify(build())
