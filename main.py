@@ -1,39 +1,26 @@
-"""Funniest one-line out-of-office reply, for make.fun.
+#!/usr/bin/env python3
+"""Write the out-of-office reply entry to /output/entry.txt.
 
-Competition: u-hamsyh-funniest-one-line-out-of-office-reply-5490c1c8
-("Funniest One-Line Out-of-Office Reply").
-
-The program writes a single reply to /output/entry.txt: one line,
-1-160 characters, no trailing newline. Pure standard library, no
-network access, no randomness, same bytes on every run.
+Stdlib only, no network. Deterministic: the same bytes every run.
 """
 
 from pathlib import Path
 
-REPLY = "I'm out until Monday — I finally took my annual leave, all four days of it, and I intend to spend them replying to nobody, including you, especially you."
+ENTRY = "I'm out until Monday. If it's urgent, it isn't \u2014 my replacement retired in 2019 and HR has been forwarding his emails to me ever since."
 
-DEST = Path("/output/entry.txt")
-
-
-def build() -> str:
-    """Write the reply and read it back from disk."""
-    DEST.parent.mkdir(parents=True, exist_ok=True)
-    DEST.write_text(REPLY, encoding="utf-8", newline="")
-    with open(DEST, "r", encoding="utf-8", newline="") as f:
-        return f.read()
+OUTPUT_PATH = Path("/output/entry.txt")
 
 
-def verify(text: str) -> None:
-    """The gate, checked against what is actually on disk."""
-    if text != REPLY:
-        raise SystemExit("entry.txt differs from REPLY")
-    if not 1 <= len(text) <= 160:
-        raise SystemExit("entry length outside 1-160 characters")
-    if text != text.strip():
-        raise SystemExit("entry has leading or trailing whitespace")
-    if "\n" in text or "\r" in text:
-        raise SystemExit("entry must be a single line")
+def main() -> None:
+    # Guard the entry shape before writing: one line, no trailing newline.
+    assert len(ENTRY) == 135, f"entry must be 135 chars, got {len(ENTRY)}"
+    assert "\n" not in ENTRY, "entry must be a single line"
+    assert not ENTRY.endswith("\n"), "entry must have no trailing newline"
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT_PATH.write_text(ENTRY, encoding="utf-8", newline="")
+    # Verify the bytes on disk match the entry exactly.
+    assert OUTPUT_PATH.read_bytes() == ENTRY.encode("utf-8")
 
 
 if __name__ == "__main__":
-    verify(build())
+    main()
